@@ -1,0 +1,73 @@
+---
+title: "Introduction to Quantitative Research Methods"
+subtitle: "Descriptive and inferential statistics"
+format:
+  revealjs: 
+    slide-number: true
+    chalkboard: 
+      buttons: false
+    preview-links: auto
+    logo: mysite/www/RKILogo.svg.png
+    css: styles.css
+resources:
+  - IntroQuant.pdf
+editor: visual
+---
+
+## Objectives
+
+-   Overview of quantitative data 
+-   
+-   Importing data in R and Stata
+-   Data cleaning in R and Stata
+
+# Quantitiative data
+
+## Types of quantitative data
+
+## Categorical data
+
+::: {.incremental}
+- Nominal data
+  - Female = 0, Male = 1
+:::
+
+## Numeric data
+
+## Ratios
+
+## Proportions
+
+## Rates
+
+## Sources of quantitiative data
+- Interviews or surveys
+- Medical records
+- Institutions or agencies
+
+# Descriptive statistics
+
+## Summary statistics
+
+## Mean
+
+## Median
+
+## Mode
+
+## Range
+
+## Quartiles
+
+## Variance
+
+# Inferential statistics
+
+## Hypothesis testing 
+
+# Linear regression
+
+# Logistic regression
+
+
+

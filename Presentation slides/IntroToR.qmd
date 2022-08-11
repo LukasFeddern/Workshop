@@ -1,0 +1,629 @@
+---
+title: "R and Stata"
+subtitle: "A very brief introduction"
+format:
+  revealjs: 
+    slide-number: true
+    chalkboard: 
+      buttons: false
+    preview-links: auto
+    logo: mysite/www/AU_CDC_Logo.png
+    css: styles.css
+resources:
+  - IntroToR.pdf
+editor: visual
+---
+
+# Welcome
+
+## Objectives
+
+-   Installing R and R Studio
+-   Setting up R Studio
+-   Importing data in R and Stata
+-   Data cleaning in R and Stata
+
+## Course Companion
+
+You can find exercises, code examples, and solutions [here](https://lukasfeddern.github.io): https://lukasfeddern.github.io
+
+## Data and Exercises
+
+-   3 sets of exercises with solutions
+-   R and Stata
+-   Data: Seroprevalence of COVID-19 in Carabayllo Peru [^1]
+
+[^1]: Peinado Rodriguez, Jesus (2022), Seroprevalence of COVID-19 in Carabayllo Peru, Dryad, Dataset, https://doi.org/10.5061/dryad.xwdbrv1ft
+
+# R and R Studio
+
+## What is R?
+
+-   Programming language
+-   Free, open-source software
+-   Application: Statistics, bioinformatics, epidemiology, social sciences...
+-   Why?
+
+::: {.fragment .fade-up}
+-   It is **free**
+-   It is versatile
+-   Large community
+-   It is great for graphing & statistics
+:::
+
+## Installing R
+
+<br> <br> <br> <br> The most recent version of R is available through [CRAN](https://cran.rstudio.com){preview-link="true"}
+
+---
+![](R.PNG)
+
+
+## What is R Studio?
+- Free integrated development environment (IDE) 
+  - Makes programming languages more user friendly
+  - Like a text editor for code
+- Not *just* R but also Python, C++, SQL, Stan, Julia, Quarto
+- What we will be using through out the workshop
+
+:::{.incremental}
+
+- October 2022: Posit
+
+:::
+
+## Installing R Studio
+<br>
+<br>
+<br>
+<br>
+The most recent version of R Studio IDE is available through [RStudio](https://www.rstudio.com/products/rstudio/download/){preview-link="true"}
+
+## Installing R Studio
+![](InstallRStudio.PNG)
+
+## Installing R Studio
+![](RStudio.png)
+
+## Navigating R Studio
+![](RStudio2.png)
+
+## Navigating R Studio
+![](RStudioImageNewFile.png)
+
+## First Lines of Code
+<br>
+<br>
+<br>
+<br>
+```{.r}
+print("Hello, world")
+```
+
+## R as a Calculator
+<br>
+<br>
+<br>
+<br>
+```{.r}
+4+4
+11-1
+7*8
+22/11
+```
+
+
+# Basics in R
+
+## Workflow in R
+
+What is your working directory?
+
+- File
+- Code files
+- Data files
+- Output files 
+
+
+
+## Workflow in R
+
+::: {.fragment fragment-index=1}
+What is your working directory?
+
+```{.r}
+getwd()
+```
+:::
+
+::: {.fragment fragment-index=2}
+Setting your working directory
+
+```{.r}
+setwd(path)
+```
+:::
+
+
+
+
+## Quick Aside: R Studio Projects
+
+R Studio helps you structure your files through Projects
+
+- Automatically sets working directory to project path
+- Saves all new files in the directory (code, data, plots)
+
+## Quick Aside: R Studio Projects
+
+![](Project1.png)
+
+## Quick Aside: R Studio Projects
+
+![](Project2.png)
+
+## Quick Aside: R Studio Projects
+
+![](Project3.png)
+
+## Packages in R
+
+- Extensions to 'Base R'
+- Created by R user community 
+- No warranty 
+- All packages are tested regularly 
+- Contain functions, data, compiled code
+
+## Packages in R
+
+<br>
+<br>
+<br>
+<br>
+
+```{.r code-line-numbers="1|2|3-5"}
+install.packages(package)
+library(package)
+help(package)
+?package
+?package::function
+```
+
+
+
+## Object Assignment
+:::{.fragment}
+- Later: Objects and data types
+- Now: Environment pane in R Studio
+- Operators:
+
+:::{.fragment .fade-in}
+   <code><-</code>
+
+::: {.fragment .highlight-red}
+::: {.fragment .semi-fade-out}
+   =
+:::
+:::
+:::
+:::
+
+:::{.fragment .fade-in}
+
+```{.r}
+x <- 3
+```
+:::
+
+## Import and Export Data in R
+
+R can import and export data to and from various sources, such as:
+
+- R files (.Rdata)
+- Text files (.csv)
+- Excel files (.xls)
+- Stata files (.dta)
+- Sas files (.sas)
+- SPSS files (.sav)
+- ...
+
+## Import and Export .csv Files in R 
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-2|3-4"}
+read.csv(path)
+read.csv(path, sep = ",")
+write.csv(df, path)
+write.csv(df, path, col.names = FALSE, sep = ",")
+```
+
+## Import and Export Excel Files in R 
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-2|3"}
+read_excel(path)
+xlsx::read.xlsx(path)
+xlsx::write.xlsx(df, file = path, sheetName = "Sheet 1", append = FALSE)
+```
+
+## Import and Export Stata Files in R 
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-2|3"}
+read_stata(path)
+read_dta(path)
+write_dta(df, path)
+```
+
+## Inspecting Data
+
+- Aim: Get a first overview
+- Typical questions: 
+  - How many observations?
+  - How many variables? What are the variable names?
+  - What are the variable types?
+  - How are the variables distributed?
+  - Are there missing data?
+
+## Inspecting Data in R
+
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1|2-3|4-6"}
+df <- read.csv(path)
+nrow(df)
+ncol(df)
+summary(df)
+str(df)
+skim(df)
+```
+
+## Data Types in R
+- Character
+- Numeric (double)
+- Integer
+- Logical
+- Vector
+- List
+- Factor
+- Data frame
+- Array
+
+## Character
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-2|3-6"}
+is.character("a")
+as.character(5)
+paste("a","b")
+paste0("a","b")
+substr("123string", start, stop)
+strsplit("One-Two", "-")
+```
+
+## Numeric
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-3|4-7"}
+is.numeric(1.5)
+is.integer(1L)
+as.numeric(1L)
+1+1
+1-1
+1*1
+1/1
+```
+
+## Logical
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-2|3-8"}
+is.logical(TRUE)
+as.logical(1)
+1 == 1
+2 < 1
+1 <= 3
+5 > 1 
+!
+"Fiat" %in% c("BMW", "Fiat")
+```
+
+
+## Vectors
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-3|4-7"}
+is.vector(c(1:4))
+c()
+start:end
+seq(from = ..., to = ...))
+rep(start:end, times)
+rep(start:end, each = ...)
+rep(c(string1, string2), each = ...)
+```
+
+
+## Lists
+<br>
+<br>
+<br>
+<br>
+See companion
+
+## Factors
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-3|4-8"}
+is.factor(factor(rep(c("Male", "Female"), each = 3)))
+factor(vector)
+factor(vector, level = ..., labels = ..., exclude = ..., ordered = ...)
+levels(factor)
+droplevels()
+summary()
+attributes()
+cut(c(1:20), breaks = c(0,5,10,15,20))
+```
+
+## Matrices
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-3|4-8"}
+is.matrix(matrix(1:12, 3,4))
+matrix(data=vector, nrow = ..., ncol = ...)
+matrix(vector, ..., ...)
+dim(matrix)
+nrow(matrix)
+ncol(matrix)
+cbind(matrix1, matrix2)
+rbind(matrix1, matrix2)
+```
+
+## Data Frames
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-2|3-7"}
+is.data.frame(data.frame(x = 1:5, y = 2:6))
+data.frame()
+dim(data frame)
+nrow(data frame)
+ncol(data frame)
+cbind(data frame1, data frame2)
+rbind(data frame1, data frame2)
+```
+
+
+# Data Cleaning in R
+
+## Data Cleaning in R
+
+- Goal: (Complete), consistent, clear data
+- Ready for analysis and replicable
+- Steps: 
+  - Fill/Remove missing data, (or don't)
+  - Remove duplicates
+  - Identify (and smooth) noisy data (outliers)
+  - Recode inconsistencies
+  
+## Dealing with Missing Data
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-3"}
+df[complete.cases(df),]
+df[!complete.cases(df),]
+na.omit(df)
+```
+
+## Dealing with Duplicated Data
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-3"}
+df[duplicated(df),]
+df[!duplicated(df),]
+distinct(df)
+```
+
+## Identify outliers
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-3|4-5"}
+outliers <- boxplot.stats(df$variable)$out
+rows <- which(dat$hwy %in% c(outliers))
+df[rows,]
+cut()
+df[!rows,]
+log()
+```
+
+## Renaming Variables
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-2|3-5"}
+names(df) <- c("new_var", ...)
+names(df)[names(df) == "old_var"] <- "new_var"
+rename(df, new_var = new_var)
+rename(df, new_var = old_var,
+           new_var2 = old_var2)
+```
+
+## Creating and Recoding Variables
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-2|3-8|9-10"}
+df$new_var <- vector
+mutate(df, new_var = vector)
+df$new_var <- ifelse(test/logical statement, if true, if false)
+df$old_var[test/logical statement] <- new_value
+mutate(df, new_var = ifelse(test/logical statement, if true, if false))
+mutate(df, new_var = case_when(test ~ if true,
+                              test ~ if true, 
+                              test ~ if true))
+recode(df$old_var, old_value = new_value, old_value2 = new_value2)
+mutate(new_var = replace(new_var, test/logical statement, new_value))
+```
+
+## Subsetting 
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-2|3-5|6-7"}
+df[rows, columns]
+df[-index]
+select(df, var1, var2, var3)
+select(df, var1:var3)
+select(df, -var1)
+subset(df, test)
+filter(df, test)
+```
+
+# Stata
+
+## Basics in Stata
+- More details: see companion
+
+## Data cleaning in Stata
+- Steps are similar to R 
+- Steps: 
+  - Fill/Remove missing data, (or don't)
+  - Remove duplicates
+  - Identify (and smooth) noisy data (outliers)
+  - Recode inconsistencies
+  - Add labels
+  
+## Dealing with Missing Data
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-2|3-4"}
+ssc install mdesc
+mdesc
+drop if var==.
+drop if missing(var)
+```
+
+## Dealing with Duplicated Data
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-3"}
+duplicates report
+duplicates report var1 var2 var3
+duplicates drop
+```
+
+## Identify outliers
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-2|3|4-5"}
+ssc install extremes
+extremes var1
+tab var1
+egen new_var = cut(old_var), {at(#,#,...,#) or group(#)} 
+egen new_var = log(old_var)
+```
+
+## Renaming Variables
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1"}
+rename old_var new_var
+```
+
+## Creating and Recoding Variables
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-2|3-8|9-10"}
+gen new_var = new_value
+egen new_var = function(old_var)
+replace new_var = new_value if new_var = old_value
+recode var1 var2 (old_value = new_value)
+```
+
+## Subsetting 
+<br>
+<br>
+<br>
+<br>
+```{.r code-line-numbers="1-2|3-4"}
+drop var1 var2 
+keep var1 var2
+drop if test
+keep if test
+```
+
+
+# Recap
+
+## Useful commands in R and Stata {.smaller .scrollable}
+
++---------------+---------------------------------------+--------------------------+
+| Task          | R                                     | Stata                    |
++===============+=======================================+==========================+
+| Overview      | - View()                              | - <code>browse</code>    |
+|               | - <code>summary()</code>              | - <code>summarise</code> |
+|               | - <code>names()</code>                | - <code>list</code>      |
++---------------+---------------------------------------+--------------------------+
+| Select        | - <code>select()</code>               | - <code>keep</code>      |
+| variables     | - indexing                            | - <code>drop</code>      |
++---------------+---------------------------------------+--------------------------+
+| Select        | - <code>filer()</code>                | - <code>keep if</code>   |
+| observations  | - indexing + logic                    | - <code>drop if</code>   |
++---------------+---------------------------------------+--------------------------+
+| Recode        | - indexing + logic + <code><- </code> | - <code>replace</code>   |
+| observations  | - <code>mutate(recode())</code>       | - <code>recode</code>    |
++---------------+---------------------------------------+--------------------------+
+| Label         | - `attr(df, "var.labels") <-`         | - <code>label var </code>|
+| variables     |                                       |                          |
++---------------+---------------------------------------+--------------------------+
+
+## Exercises {.smaller}
+
+Using the statistical program of your choosing,
+
+(@) determine your current working directory \
+(@) import the [csv](https://raw.githubusercontent.com/LukasFeddern/Workshop/main/peru.csv) from the GitHub repository for this workshop and save it to your working directory \
+(@) get a first glance of the data and determine the type of all variables in the data set \
+(@) add the label “cardiovascular diseases” to the variable cardiovascular
+(@) rename the variable "Heights..cm." and move the unit of measurement to the label 
+(@) check for missing values for the variable rdt
+(@) recode “Currently have” and “Had, within 9 months” into “yes” for all variables describing symptoms
