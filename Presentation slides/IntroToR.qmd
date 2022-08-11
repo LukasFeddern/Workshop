@@ -3,9 +3,8 @@ title: "R and Stata"
 subtitle: "A very brief introduction"
 format:
   revealjs: 
+    self-contained: true
     slide-number: true
-    chalkboard: 
-      buttons: false
     preview-links: auto
     logo: mysite/www/AU_CDC_Logo.png
     css: styles.css
