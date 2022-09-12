@@ -1,4 +1,4 @@
-PTID,Heights (cm),age_range,age,gender,job_status,workingoutsidehome,public_transportation,household_contact,previoustest,study_RDT_result,type_ab,diabetes,cardiovascular,obesity,fever,nasalcongestion,breathdifficulty,generaldiscomfort,diarrhea,usea,cefalea,cough,sorethroat,anysymptoms,symptoms3cat,self_rated_health
+PTID,Heights (cm),age_range,age,gender,job_status,workingoutsidehome,public_transportation,household_contact,previoustest,study_RDT_result,type_ab,diabetes,cardiovascular,obesity,fever,nasalcongestion,breathdifficulty,generaldiscomfort,diarrhea,nausea,cefalea,cough,sorethroat,anysymptoms,symptoms3cat,self_rated_health
 026214-0182-3,75,0-11,8,Male,student,0,1,0,0,no Reactive,,0,0,0,no,"Had, within 9 months",no,no,no,no,no,no,no,Symptomatic,"Had, within 9 months",1
 026214-0899-4,76,0-11,4,Male,student,0,0,0,0,no Reactive,,0,0,0,no,Currently have,no,no,no,no,Currently have,no,no,Symptomatic,Currently have,3
 026214-1648-5,78,0-11,6,Male,student,0,0,0,0,Reactive,IgM-IgG,0,0,0,no,no,no,no,no,no,no,no,no,Asymptomatic,no,1
