@@ -1,0 +1,856 @@
+---
+title: "Survey data analysis"
+author: "Francisco Pozo Martin"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#CHUNK 1
+#First we install the packages required for this exercise
+ipak <- function(pkg){
+       new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+      if (length(new.pkg))
+             install.packages(new.pkg, dependencies = TRUE)
+    sapply(pkg, require, character.only = TRUE)
+}
+
+packages <- c("readxl",
+"tidyverse",
+"epiDisplay",
+"sjPlot",
+"survey",
+"weights",
+"ggplot2",
+"jtools",
+"wCorr",
+"gtsummary",
+"gt",
+"labelled",
+"car",
+"ggpubr",
+"dplyr",
+"gvlma",
+"MASS",
+"broom",
+"ggplot2",
+"svyVGAM")
+
+ipak(packages)
+```
+
+
+```{r}
+#CHUNK2
+#let's load the data
+Peru_data <- read_excel("Peru_data_COVID19seroprev.xlsx")
+#This is a COVID-19 sero-survey of 2014 individuals in a locality in Peru.
+```
+
+```{r}
+#CHUNK3
+#We will be looking at two outcomes: 1) test result and 2) self-rated health
+
+#Let's look at the outcomes. Note that there are two variables for each outcome
+
+#A descriptive of the test result is provided by the tab1 command:
+
+tab1(Peru_data$study_RDT_result_num,horiz=TRUE,main="distribution of the test result (sample)")
+tab1(Peru_data$study_RDT_result_num_f,horiz = TRUE,main="distribution of the test result (sample)")
+
+#Note that "study_RDT_result_num" is a dichotomous variable composed of two integers (baseline 0 and maximum value at 1)
+#"study_RDT_result_num_f" is a factor variable with two levels, "No reactive" and "Reactive"
+
+```
+
+```{r}
+#CHUNK4
+#Here is a descriptive of the self-rated health:
+
+tab1(Peru_data$self_rated_health_num,horiz = TRUE,main="Distribution of self-rated health (sample)")
+tab1(Peru_data$self_rated_health_num_f,horiz = TRUE,main="Distribution of self-rated health (sample)")
+
+#What is the proportion of individuals in the sample reporting good health? (Look at the table in the output of ) 
+#How many individuals in the sample report good or very good health?
+```
+
+
+```{r}
+#Other variables in the survey include:
+
+#1. Sociodemographic: Age group, Gender, Job status, working outside of home, uses public transportation
+
+#2. COVID-19 related symptoms: cough, sore throat, breathing difficulty, fever, nasal congestion, diarrhea, general discomfort
+
+#3. Comorbidities: diabetes, cardiovascular disease, obesity
+
+#4. Other variables: Had contact with COVID-19 positive in the household, Has a previous COVID-19 test
+```
+
+```{r}
+#CHUNK5
+#Let's get a descriptive of all the sociodemographic variables in the survey sample (in tabular format)
+table_sociodemographics <- Peru_data%>%
+  select(gender_num_f,age_range_num_f,job_status_num_f,wkoutside_num_f,public_transportation_num_f)%>%
+  tbl_summary(type = all_dichotomous() ~ "categorical",percent="column")
+
+table_sociodemographics
+
+
+#you can save the table as an image e.g. for a report (and can do the same for other tables by copying the code and changing the name of the table)
+
+table_sociodemographics%>%
+  as_gt()%>%
+  gt::gtsave(filename = "table_sociodemographics.png")
+
+#What is the percentage of women in the sample? Is it low? high? Why could this be?
+
+#According to job status, what are the two categories most represented in the sample?
+
+#Most individuals in the sample (about 82%) do not work outside the household. Is this normal?
+
+#Here is an overview of the results from the descriptive analysis of the demographics in the sample:
+
+
+#Summary of results 
+#60% of individuals in the serosurvey sample are women
+
+# 32% are under the age of 18 and 12% are 60 years or older
+
+# 27.5% are working, either as professionals or hourly workers, with a full 32% being students and 28% housekeepers
+
+#16% have had COVID-19 symptoms in the last 9 months and 7.2% currently have COVID-19 symptoms
+
+#The most common COVID-19 symptoms are cough, sore throat and nasal congestion. In total, 23.8% of the individuals in the sample have had at least one COVID-19 symptom
+
+ #Of the three comorbidities, the most common are cardiovascular diseases (5.1%) and the least common is diabetes (2.8%)
+
+#16% of individuals in the sample have had contact with a COVID-19 patient in the household and 15% have done a COVID-19 test previously
+
+
+```
+
+```{r}
+#CHUNK6
+#Let's do a descriptive table of the symptoms. The variable names for these symptoms are: cough_num3_f, sorethroat_num3_f, breathdifficulty_num3_f, fever_num3_f, nasalcongestion_num3_f, diarrhea_num_f,generaldiscomfort_num_f. 
+
+table_symptoms1 <- Peru_data%>%
+  select(cough_num3_f,sorethroat_num3_f,breathdifficulty_num3_f,fever_num3_f,nasalcongestion_num3_f,diarrhea_num3_f,generaldiscomfort_num3_f)%>%
+  tbl_summary(type = all_dichotomous() ~ "categorical",percent="column")
+table_symptoms1
+
+#Overview of results...
+
+
+# 16% have had COVID-19 symptoms in the last 9 months and 7.2% currently have COVID-19 symptoms
+
+# The most common COVID-19 symptoms are cough, sore throat and nasal congestion. In total, 23.8% of the individuals in the sample have had at least one COVID-19 symptom
+
+#Of the three comorbidities, the most common are cardiovascular diseases (5.1%) and the least common is diabetes (2.8%)
+#16% of individuals in the sample have had contact with a COVID-19 patient in the household and 15% have done a COVID-19 test previously# 
+
+
+
+```
+
+
+
+```{r}
+#CHUNK7
+#Let's get a descriptive of the comorbidity variables:
+table_comorbidities1 <- Peru_data%>%
+  select(diabetes_num_f,cardiovascular_num_f,obesity_num_f)%>%
+  tbl_summary(type = all_dichotomous() ~ "categorical",percent="column")
+table_comorbidities1
+
+#Overview of results
+#Of the three comorbidities, the most common are cardiovascular diseases (5.1%) and the least common is diabetes (2.8%)
+```
+
+```{r}
+#CHUNK8
+#Let's get a descriptive of the remaining variables:
+table_others1 <- Peru_data%>%
+  select(household_contact_num_f,previoustest_num_f)%>%
+  tbl_summary(type = all_dichotomous() ~ "categorical",percent="column")
+table_others1
+
+#Overview of results
+#16% of individuals in the sample have had contact with a COVID-19 patient in the household and 15% have done a COVID-19 test previously
+
+
+```
+
+
+```{r}
+#CHUNK9
+#We can check how the outcomes are distributed by the different variables in the sample of individuals. For the test result:
+
+table_results_test<- Peru_data%>%
+  select(study_RDT_result_num_f,gender_num_f,age_range_num_f,job_status_num_f,wkoutside_num_f,public_transportation_num_f,cough_num3_f,sorethroat_num3_f,breathdifficulty_num3_f,fever_num3_f,nasalcongestion_num3_f,diarrhea_num3_f,generaldiscomfort_num3_f,diabetes_num_f,cardiovascular_num_f,obesity_num_f,household_contact_num_f,previoustest_num_f)%>%
+  tbl_summary(by=study_RDT_result_num_f,type = all_dichotomous() ~ "categorical",percent="row")%>%
+  add_overall(last="TRUE")
+table_results_test
+
+
+#Overview of results
+#A slightly higher proportion of men than women (26% vs 24%) in the sample have COVID-19 antibodies [Hypothesis: there is no difference in the proportion of individuals with COVID-19 antibodies by gender]
+
+#A higher proportion of individuals in the sample aged 30-59 (32%) and aged 60 or older (28%) have COVID-19 antibodies compared to younger individuals (16%-23% depending on the age group) [Hypothesis: there is a difference in proportion of individuals with COVID-19 antibodies by age]
+
+#By job status, a higher proportion of hourly workers, housekeepers and professionals have COVID-19 antibodies (31%, 30% and 28%) [Hypothesis: there is a difference in proportion of individuals with COVID-19 antibodies by job status]
+
+#A higher proportion of individuals working outside the home (29%) /taking public transportation (39%) have COVID-19 antibodies compared to those not working outside home (24%) / not taking public transportation (29%). [Hypothesis: there is a difference in proportion of individuals with COVID-19 antibodies by whether individuals work from home or take public transport]
+
+#A higher proportion of individuals having had or having the following COVID-19 symptoms have COVID-19 antibodies- cough, breathing difficulties, fever, diarrhoea and general discomfort- compared to those without these COVID-19 symptoms [Hypothesis: there is a difference proportion of individuals with COVID-19 antibodies by COVID-19 symptoms: cough, breathing difficulties, fever, diarrhoea, general discomfort]
+
+#A higher proportion of individuals with diabetes (35%), cardiovascular disease (34%) and obesity (41%) have COVID-19 antibodies compared to those without these conditions (24%-25%) [Hypothesis: there is a difference in proportion of individuals with COVID-19 antibodies by comorbidities]
+
+#A higher proportion of individuals who had a COVID-19 household contact (41%)/ had a previous COVID-19 test (41%) has COVID-19 antibodies compared to those who had no contact and had not taken a test (24%) [Hypothesis: there is a difference in proportion of individuals with COVID-19 antibodies by whether or not the individual has had a COVID-19 contact in the household/ previous test]
+
+
+
+```
+
+```{r}
+#CHUNK10
+#We can check how the outcomes are distributed by the different variables in the sample of individuals. For self-rated health
+
+table_selfratehealth <- Peru_data%>%
+  select(self_rated_health_num_f,gender_num_f,age_range_num_f,job_status_num_f,wkoutside_num_f,public_transportation_num_f,cough_num3_f,sorethroat_num3_f,breathdifficulty_num3_f,fever_num3_f,nasalcongestion_num3_f,diarrhea_num3_f,generaldiscomfort_num3_f,diabetes_num_f,cardiovascular_num_f,obesity_num_f,previoustest_num_f)%>%
+  tbl_summary(by=self_rated_health_num_f,type = all_dichotomous() ~ "categorical",percent="row")%>%
+  add_overall(last="TRUE")
+table_selfratehealth
+
+
+```
+
+```{r}
+#CHUNK11
+#OK. Now we have a sense of the information contained in our survey. However, note that for the analysis we need to incorporate the survey design and the weights, which project the survey results to the total population of the locality where the survey was undertaken. To illustrate the weights and how they were assigned to the population, run this routine (note: the variable final_w is the weights variable):
+table_weights<-Peru_data%>%
+  select(final_w,gender_num_f,age_range_num_f)%>%
+  tbl_strata(
+    strata=age_range_num_f,
+    .tbl_fun = 
+      ~.x%>%
+      tbl_summary(by=gender_num_f,percent = "row"))%>%
+  modify_header(update = list(
+  stat_1_1="**Male**",
+  stat_2_1="**Female**",
+  stat_1_2="**Male**",
+  stat_2_2="**Female**",
+  stat_1_3="**Male**",
+  stat_2_3="**Female**",
+  stat_1_4="**Male**",
+  stat_2_4="**Female**",
+  stat_1_5="**Male**",
+  stat_2_5="**Female**"))%>%
+  modify_footnote(update = everything() ~ NA)
+table_weights
+```
+
+```{r}
+#CHUNK12
+#Now we incorporate the survey design. For the purposes of our analysis the survey is a simple random sample of the population. 
+#survey design
+
+SRS_svy_design <- svydesign(data=Peru_data,id = ~1,weights=~final_w)
+
+
+```
+
+```{r}
+#CHUNK13
+#Now for the descriptive of the sample incorporating the survey design and the weights
+
+#first, the descriptive of the outcome: test result
+#sample with weights
+table_results_test_w<-
+survey::svydesign(data=Peru_data,ids = ~1,weights=~final_w) %>%
+  tbl_svysummary(include= study_RDT_result_num_f,type = all_dichotomous() ~ "categorical")
+table_results_test_w
+#sample without weights:
+table_results_test_now <- Peru_data%>%
+  select(study_RDT_result_num_f)%>%
+  tbl_summary(type = all_dichotomous() ~ "categorical")
+table_results_test_now
+
+#What is the total number of individuals in the locality (i.e. when the survey design and weights are incorporated into the calculations)?
+#What is the total number of individuals in the sample?
+#Has the proportion of individuals with COVID-19 antibodies changed when making projections to the population of the locality?
+
+```
+
+
+```{r}
+#CHUNK14
+#Now, the descriptive of the outcome: self-rated health
+#sample with weights
+table_selfratedhealth_w<-
+survey::svydesign(data=Peru_data,ids = ~1,weights=~final_w) %>%
+  tbl_svysummary(include= self_rated_health_num_f,type = all_dichotomous() ~ "categorical")
+table_selfratedhealth_w
+#compare these results to those of the sample without weights:
+table_selfratedhealth_now <- Peru_data%>%
+  select(self_rated_health_num_f)%>%
+  tbl_summary(type = all_dichotomous() ~ "categorical")
+table_selfratedhealth_now
+
+
+#How has the self-rated health changed when making projections to the population of the locality?
+
+```
+
+```{r}
+#CHUNK15
+#Now for the descriptive of the sociodemographics projecting to the population of the locality. 
+
+#weighted sample
+table_sociodemographics_w<-
+survey::svydesign(data=Peru_data,ids = ~1,weights=~final_w) %>%
+  tbl_svysummary(include= c(gender_num_f,age_range_num_f,job_status_num_f,wkoutside_num_f,public_transportation_num_f),type = all_dichotomous() ~ "categorical")
+table_sociodemographics_w
+#unweighted sample:
+table_sociodemographics_now <- Peru_data%>%
+  select(gender_num_f,age_range_num_f,job_status_num_f,wkoutside_num_f,public_transportation_num_f)%>%
+  tbl_summary(type = all_dichotomous() ~ "categorical",percent="column")
+table_sociodemographics_now
+
+#How has the proportion of females changed when introducing the weights? We note here that the town where the survey was done is a mining town deep in the forest where many men (miners) are single
+#How has the age distribution changed? It is perhaps also useful to say that this is an aging population
+#How has the job status changed when introducing the weights?
+#And the percentage of the population working outside the home?
+
+
+```
+
+```{r}
+#CHUNK16
+#Now for the descriptive of the COVID-19 symptoms projecting to the population of the locality. Recall that the variables are: cough_num3_f,sorethroat_num3_f,breathdifficulty_num3_f,fever_num3_f,nasalcongestion_num3_f,diarrhea_num3_f,generaldiscomfort_num3_f
+
+#weighted sample
+table_covidsymptoms_w <-
+survey::svydesign(data=Peru_data,ids = ~1,weights=~final_w) %>%
+  tbl_svysummary(include= c(cough_num3_f,sorethroat_num3_f,breathdifficulty_num3_f,fever_num3_f,nasalcongestion_num3_f,diarrhea_num3_f,generaldiscomfort_num3_f),type = all_dichotomous() ~ "categorical")
+table_covidsymptoms_w
+
+#unweighted sample:
+table_covidsymptoms_now <- Peru_data%>%
+  select(cough_num3_f,sorethroat_num3_f,breathdifficulty_num3_f,fever_num3_f,nasalcongestion_num3_f,diarrhea_num3_f,generaldiscomfort_num3_f)%>%
+  tbl_summary(type = all_dichotomous() ~ "categorical",percent="column")
+table_covidsymptoms_now
+
+#Have there been big changes in the distribution of symptoms?
+#What may be a reason for this?
+
+
+```
+
+```{r}
+#CHUNK17
+#What about the comorbidities? 
+
+#for the weighted sample
+table_comorbidities_w <-
+survey::svydesign(data=Peru_data,ids = ~1,weights=~final_w) %>%
+  tbl_svysummary(include= c(diabetes_num_f, cardiovascular_num_f, obesity_num_f),type = all_dichotomous() ~ "categorical")
+table_comorbidities_w
+
+#for the unweighted sample:
+table_comorbidities_now <- Peru_data%>%
+  select(diabetes_num_f, cardiovascular_num_f, obesity_num_f)%>%
+  tbl_summary(type = all_dichotomous() ~ "categorical",percent="column")
+table_comorbidities_now
+#Have there been any changes in the distribution of comorbidities from the unweighted to the weighted sample?
+#Which?
+#Why?
+```
+
+```{r}
+#CHUNK18
+##Let's look now at a descriptive of the results by type of independent variable. First, the test results.
+#The first table we are going to construct is a descriptive of the test results by demographic variables.
+#weighted sample
+table_results_sociodemographic_w <- 
+  survey::svydesign(data=Peru_data,ids = ~1,weights=~final_w) %>%
+  tbl_svysummary(include=c(study_RDT_result_num_f,gender_num_f,age_range_num_f,job_status_num_f,wkoutside_num_f,public_transportation_num_f),by=study_RDT_result_num_f,type = all_dichotomous() ~ "categorical",percent="row")%>%
+  add_overall(last="TRUE")
+table_results_sociodemographic_w
+
+#unweighted sample.
+
+table_results_sociodemographic_now <- Peru_data%>%
+  select(study_RDT_result_num_f,gender_num_f,age_range_num_f,job_status_num_f,wkoutside_num_f,public_transportation_num_f)%>%
+  tbl_summary(by=study_RDT_result_num_f,type = all_dichotomous() ~ "categorical",percent="row")%>%
+  add_overall(last="TRUE")
+table_results_sociodemographic_now
+
+
+
+#Are there major differences in the distribution of the test results by symptoms variables in the weighted versus the unweighted sample?
+#In the weighted sample, for what variables are there greatest differences in the distribution of the test results between groups?  
+```
+
+```{r}
+#CHUNK19
+#The second table we are going to construct is a descriptive of the test results by symptoms.
+#weighted sample
+table_results_symptoms_w <- 
+  survey::svydesign(data=Peru_data,ids = ~1,weights=~final_w) %>%
+  tbl_svysummary(include=c(cough_num3_f,sorethroat_num3_f,breathdifficulty_num3_f,fever_num3_f,nasalcongestion_num3_f,diarrhea_num3_f,generaldiscomfort_num3_f,symptoms3cat_num_f),by=study_RDT_result_num_f,type = all_dichotomous() ~ "categorical",percent="row")%>%
+  add_overall(last="TRUE")
+table_results_symptoms_w
+
+
+#unweighted sample. 
+table_results_symptoms_now <- Peru_data%>%
+  select(study_RDT_result_num_f,cough_num3_f,sorethroat_num3_f,breathdifficulty_num3_f,fever_num3_f,nasalcongestion_num3_f,diarrhea_num3_f,generaldiscomfort_num3_f,symptoms3cat_num_f)%>%
+  tbl_summary(by=study_RDT_result_num_f,type = all_dichotomous() ~ "categorical",percent="row")%>%
+  add_overall(last="TRUE")
+table_results_symptoms_now
+
+
+
+#Are there major differences in the distribution of the outcomes by sociodemographic variables in the weighted versus the unweighted sample?
+```
+
+```{r}
+#CHUNK20
+#The last table we are going to construct is a descriptive of the test results by comorbidities. 
+#weighted sample
+table_results_comorbidities_w <- 
+  survey::svydesign(data=Peru_data,ids = ~1,weights=~final_w) %>%
+  tbl_svysummary(include=c(diabetes_num_f,cardiovascular_num_f,obesity_num_f),by=study_RDT_result_num_f,type = all_dichotomous() ~ "categorical",percent="row")%>%
+  add_overall(last="TRUE")
+table_results_comorbidities_w
+
+
+#unweighted sample. 
+
+table_results_comorbidities_now <- Peru_data%>%
+  select(study_RDT_result_num_f,diabetes_num_f,cardiovascular_num_f,obesity_num_f)%>%
+  tbl_summary(by=study_RDT_result_num_f,type = all_dichotomous() ~ "categorical",percent="row")%>%
+  add_overall(last="TRUE")
+table_results_comorbidities_now
+
+#Are there major differences in the distribution of the outcomes by comorbidities in the weighted versus the unweighted sample?
+```
+
+
+```{r}
+#CHUNK21
+#Now for a descriptive of self-rated health by sociodemographic variables, symptoms and comorbidities. 
+
+
+table_results_sociodemographic2_w <- 
+  survey::svydesign(data=Peru_data,ids = ~1,weights=~final_w) %>%
+  tbl_svysummary(include=c(self_rated_health_num_f,gender_num_f,age_range_num_f,job_status_num_f,wkoutside_num_f,public_transportation_num_f),by=self_rated_health_num_f,type = all_dichotomous() ~ "categorical",percent="row")%>%
+  add_overall(last="TRUE")
+table_results_sociodemographic2_w
+
+
+table_results_symptoms2_w <- 
+  survey::svydesign(data=Peru_data,ids = ~1,weights=~final_w) %>%
+  tbl_svysummary(include=c(self_rated_health_num_f,cough_num3_f,sorethroat_num3_f,breathdifficulty_num3_f,fever_num3_f,nasalcongestion_num3_f,diarrhea_num3_f,generaldiscomfort_num3_f,symptoms3cat_num_f),by=self_rated_health_num_f,type = all_dichotomous() ~ "categorical",percent="row")%>%
+  add_overall(last="TRUE")
+table_results_symptoms2_w
+
+
+
+table_results_comorbidities2_w <- 
+  survey::svydesign(data=Peru_data,ids = ~1,weights=~final_w) %>%
+  tbl_svysummary(include=c(self_rated_health_num_f,diabetes_num_f,cardiovascular_num_f,obesity_num_f),by=self_rated_health_num_f,type = all_dichotomous() ~ "categorical",percent="row")%>%
+  add_overall(last="TRUE")
+table_results_comorbidities2_w
+
+
+#For which variables can you see the biggest differences in the distribution of self-rated health across groups?
+
+```
+
+
+
+```{r}
+#CHUNK22
+#Let's do some hypothesis testing. For each of the (sociodemographic, symptoms and comorbidities) variables, we are going to check if the differences between groups in the distribution of the outcomes are statistically significant
+
+#First, for the outcome variable test results
+
+#Recall: we need to tell R about the survey design and the weights!
+
+#gender
+svychisq(~study_RDT_result_num_f+gender_num_f,design = SRS_svy_design,
+         statistic="Wald")
+
+
+#age
+svychisq(~study_RDT_result_num_f+age_range_num_f,design = SRS_svy_design,
+         statistic="Wald")
+#job status
+svychisq(~study_RDT_result_num_f+job_status_num_f,design = SRS_svy_design,
+         statistic="Wald")
+#work outside the home
+svychisq(~study_RDT_result_num_f+wkoutside_num_f,design = SRS_svy_design,
+         statistic="Wald")
+#use public transportation
+svychisq(~study_RDT_result_num_f+public_transportation_num_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#Explain in a few words the results of the tests
+#We do not reject the null hypothesis that there is no difference in the proportion of individuals with COVID-19 antibodies between genders (p=0.836) 
+#We reject the null hypothesis that there is no difference in the proportion of individuals with COVID-19 antibodies by age group (p=0.0000)
+#We reject the null hypothesis that there is no difference in the proportion of individuals with COVID-19 antibodies by job status (p=0.0000)
+#We do not reject the null hypothesis that there is no difference in proportion of individuals with COVID-19 antibodies by whether individuals work outside the house or not (p=0.189)
+#We reject the null hypothesis that there is no difference in the proportion of individuals with COVID-19 antibodies by whether individuals use public transportation or not (p=0.0000)
+
+```
+
+```{r}
+#CHUNK23
+#Now let's do the tests for the symptoms variables. 
+
+
+#cough
+
+svychisq(~study_RDT_result_num_f+cough_num3_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#sore throat
+
+svychisq(~study_RDT_result_num_f+sorethroat_num3_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#breathing difficulty
+
+svychisq(~study_RDT_result_num_f+breathdifficulty_num2_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#fever
+
+svychisq(~study_RDT_result_num_f+fever_num2_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#nasal congestion
+
+svychisq(~study_RDT_result_num_f+nasalcongestion_num3_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#diarrhoea
+
+svychisq(~study_RDT_result_num_f+diarrhea_num2_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#general discomfort
+
+svychisq(~study_RDT_result_num_f+generaldiscomfort_num2_f,design = SRS_svy_design,
+         statistic="Wald")
+
+
+
+#Explain in a few words the results of the tests
+#We reject the null hypothesis that there is no difference in the proportion of individuals with COVID-19 antibodies by symptom = cough (p=0.047)
+#We do not reject the null hypothesis that there is no difference in the proportion of individuals with COVID-19 antibodies by symptom = sore throat (p=0.7173)
+#We reject the null hypothesis that there is no difference in the proportion of individuals with COVID-19 antibodies by symptoms = breathing difficulty (p=0.037)
+#We reject the null hypothesis that there is no difference in the proportion of individuals with COVID-19 antibodies by symptom = fever (p=0.0004)
+#We do not reject the null hypothesis that there is no difference in the proportion of individuals with COVID-19 antibodies by symptom = nasal congestion (p=0.946)
+#We reject the null hypothesis that there is no difference in the proportion of individuals with COVID-19 antibodies by symptom = diarrhoea (p=0.033)
+#We reject the null hypothesis that there is no difference in the proportion of individuals with COVID-19 antibodies by symptoms = general discomfort (p=0.0000)
+
+```
+
+```{r}
+#CHUNK24
+#Now let's do the tests for the comorbidity variables and other variables. 
+
+
+#diabetes
+
+svychisq(~study_RDT_result_num_f+diabetes_num_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#cardiovascular disease
+
+svychisq(~study_RDT_result_num_f+cardiovascular_num_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#obesity
+
+svychisq(~study_RDT_result_num_f+obesity_num_f,design = SRS_svy_design,
+         statistic="Wald")
+
+
+
+#Explain in a few words the results of the tests
+#We do not reject the null hypothesis that there is no difference in the proportion of individuals with COVID-19 antibodies by whether an individual has diabetes or not (p=0.539)
+#We do not reject the null hypothesis that there is no difference in the proportion of individuals with COVID-19 antibodies by whether an individual has cardiovascular disease or not (p=0.336)
+#We (with caution) reject the null hypothesis that there is no difference in the proportion of individuals with COVID-19 antibodies by whether an individual is obese or not (p=0.056)
+
+#There are two more variables of interest: whether an individual has had a household contact or not, and whether an individual has had a previous COVID-19 test
+
+#household contact
+
+svychisq(~study_RDT_result_num_f+household_contact_num_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#We reject the hypothesis that there is no difference in the proportion of individuals with COVID-19 antibodies by whether an individual has had a contact with a COVID-19 infectee in the household (p=0.0000)
+
+#previous covid-19 test
+
+svychisq(~study_RDT_result_num_f+previoustest_num_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#We reject the hypothesis that there is no difference in the proportion of individuals with COVID-19 antibodies by whether an individual has had a previous test (p=0.0000)
+```
+
+```{r}
+#CHUNK25
+#Please repeat the hypothesis tests for the self rated health outcome 
+
+#gender
+
+svychisq(~self_rated_health_num_f+gender_num_f,design = SRS_svy_design,
+         statistic="Wald")
+
+svychisq(~self_rated_health_num_f+gender_num_f,design = SRS_svy_design,
+         statistic="Wald")
+#age
+svychisq(~self_rated_health_num_f+age_range_num_f,design = SRS_svy_design,
+         statistic="Wald")
+#job status
+svychisq(~self_rated_health_num_f+job_status_num_f,design = SRS_svy_design,
+         statistic="Wald")
+#work outside the home
+svychisq(~self_rated_health_num_f+wkoutside_num_f,design = SRS_svy_design,
+         statistic="Wald")
+#use public transportation
+svychisq(~self_rated_health_num_f+public_transportation_num_f,design = SRS_svy_design,
+         statistic="Wald")
+svychisq(~self_rated_health_num_f+cough_num3_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#sore throat
+
+svychisq(~self_rated_health_num_f+sorethroat_num3_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#breathing difficulty
+
+svychisq(~self_rated_health_num_f+breathdifficulty_num2_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#fever
+
+svychisq(~self_rated_health_num_f+fever_num2_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#nasal congestion
+
+svychisq(~self_rated_health_num_f+nasalcongestion_num3_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#diarrhoea
+
+svychisq(~self_rated_health_num_f+diarrhea_num2_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#general discomfort
+
+svychisq(~self_rated_health_num_f+generaldiscomfort_num2_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#any symptoms
+
+svychisq(~self_rated_health_num_f+symptoms3cat_num_f,design = SRS_svy_design,
+         statistic="Wald")
+
+svychisq(~self_rated_health_num_f+diabetes_num_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#sore throat
+
+svychisq(~self_rated_health_num_f+cardiovascular_num_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#breathing difficulty
+
+svychisq(~self_rated_health_num_f+obesity_num_f,design = SRS_svy_design,
+         statistic="Wald")
+
+
+#household contact
+
+svychisq(~self_rated_health_num_f+household_contact_num_f,design = SRS_svy_design,
+         statistic="Wald")
+
+
+
+#previous covid-19 test
+
+svychisq(~self_rated_health_num_f+previoustest_num_f,design = SRS_svy_design,
+         statistic="Wald")
+
+#Explain in a few words the results of the hypothesis tests
+#We reject the null hypothesis that there is no difference in the self-rated health by gender (p=0.043)
+#We reject the null hypothesis that there is no difference in the self-rated health by age group (p=0.0000)
+#We reject the null hypothesis that there is no difference in the self-rated health by job status (p=0.0000)
+#We reject the null hypothesis that there is no difference in the self-rated health by whether individuals work outside the house or not (p=0.009)
+#We (with caution) reject the null hypothesis that there is no difference in the self-rated health by whether individuals use public transportation or not (p=0.06)
+#We (with caution) reject the null hypothesis that there is no difference in the self-rated health by symptom = cough (p=0.06)
+#We do not reject the null hypothesis that there is no difference in the self-rated health by symptom = sore throat (p=0.93)
+#We do not reject the null hypothesis that there is no difference in the self-rated health by symptoms = breathing difficulty (p=0.98)
+#We do not reject the null hypothesis that there is no difference in the self-rated health by symptom = fever (p=0.62)
+#We do not reject the null hypothesis that there is no difference in the self-rated health by symptom = nasal congestion (p=0.09)
+#We do not reject the null hypothesis that there is no difference in the self-rated health by symptom = diarrhoea (p=0.825)
+#We do not reject the null hypothesis that there is no difference in the self-rated health by symptoms = general discomfort (p=0.004)
+#We do not reject the null hypothesis that there is no difference in the self-rated health by having any COVID-19 symptom (p=0.09)
+#We reject the null hypothesis that there is no difference in the self-rated health by whether an individual has diabetes or not (p=0.0006)
+#We reject the null hypothesis that there is no difference in the self-rated health by whether an individual has cardiovascular disease or not (p=0.0000)
+#We reject the null hypothesis that there is no difference in the self-rated health by whether an individual is obese or not (p=0.02)
+
+#We do not reject the hypothesis that there is no difference in the self-rated health by whether an individual has had a contact with a COVID-19 infectee in the household (p=0.53)
+#We do not reject the hypothesis that there is no difference in the self-rated health by whether an individual has had a previous test (p=0.14)
+```
+
+```{r}
+#CHUNK26
+#We have done a series of bivariate hypothesis tests to assess whether there were statistically significant differences in the outcomes by group/ category of each of the independent variables and found a number of differences.
+
+#However, what we want is an estimation of which independent variables explain the outcomes. For example, does gender/ age/ job status/ having COVID-19 symptoms or comorbidities / having had a COVID-19 contact/ having had a previous test explain the COVID-19 test results?
+
+#For this, we need to use multivariate regression analysis.
+
+#We will implement two types of regressions models: 
+
+#One: logistic regression (dichotomous outcome:test results)
+#Two: proportional odds regression (ordinal outcome: self-rated health)
+
+```
+
+```{r}
+#CHUNK27
+#One: logistic regression (dichotomous outcome:test results)
+
+#Backward sequential elimination method: start with all the variables and sequentially eliminate variables from the regression model based on the p-value of each parameter estimate (at each run of the model eliminate the variable with the highest p-value)
+
+
+logit1 <- (svyglm(factor(study_RDT_result_num)~factor(gender_num)+factor(age_range_num)+factor(job_status_num)+factor(wkoutside_num)+factor(public_transportation_num)+factor(cough_num3)+factor(sorethroat_num3)+factor(breathdifficulty_num2)+factor(fever_num2)+factor(diarrhea_num2)+factor(generaldiscomfort_num2)+factor(diabetes_num)+factor(cardiovascular_num)+factor(obesity_num)+factor(household_contact_num)+factor(previoustest_num), family=quasibinomial, design=SRS_svy_design, na.action = na.omit))
+summary(logit1)
+
+#Which variable should we take out first?
+#diabetes (p=0.98)
+logit2 <- (svyglm(factor(study_RDT_result_num)~factor(gender_num)+factor(age_range_num)+factor(job_status_num)+factor(wkoutside_num)+factor(public_transportation_num)+factor(cough_num3)+factor(sorethroat_num3)+factor(breathdifficulty_num2)+factor(fever_num2)+factor(diarrhea_num2)+factor(generaldiscomfort_num2)+factor(cardiovascular_num)+factor(obesity_num)+factor(household_contact_num)+factor(previoustest_num), family=quasibinomial, design=SRS_svy_design, na.action = na.omit))
+summary(logit2)
+
+#which variable should we take out next?
+#breathing difficulty (0.915)
+logit3 <- (svyglm(factor(study_RDT_result_num)~factor(gender_num)+factor(age_range_num)+factor(job_status_num)+factor(wkoutside_num)+factor(public_transportation_num)+factor(cough_num3)+factor(sorethroat_num3)+factor(fever_num2)+factor(diarrhea_num2)+factor(generaldiscomfort_num2)+factor(cardiovascular_num)+factor(obesity_num)+factor(household_contact_num)+factor(previoustest_num), family=quasibinomial, design=SRS_svy_design, na.action = na.omit))
+summary(logit3)
+#which variable should we take out next?
+#gender (p=0.68)
+logit4 <- (svyglm(factor(study_RDT_result_num)~factor(age_range_num)+factor(job_status_num)+factor(wkoutside_num)+factor(public_transportation_num)+factor(cough_num3)+factor(sorethroat_num3)+factor(fever_num2)+factor(diarrhea_num2)+factor(generaldiscomfort_num2)+factor(cardiovascular_num)+factor(obesity_num)+factor(household_contact_num)+factor(previoustest_num), family=quasibinomial, design=SRS_svy_design, na.action = na.omit))
+summary(logit4)
+#which variable should we take out next?
+#obesity (p=0.56)
+logit5 <- (svyglm(factor(study_RDT_result_num)~factor(age_range_num)+factor(job_status_num)+factor(wkoutside_num)+factor(public_transportation_num)+factor(cough_num3)+factor(sorethroat_num3)+factor(fever_num2)++factor(diarrhea_num2)+factor(generaldiscomfort_num2)+factor(cardiovascular_num)+factor(household_contact_num)+factor(previoustest_num), family=quasibinomial, design=SRS_svy_design, na.action = na.omit))
+summary(logit5)
+#which variable should we take out next?
+#cardiovascular (p=0.37)
+logit6 <- (svyglm(factor(study_RDT_result_num)~factor(age_range_num)+factor(job_status_num)+factor(wkoutside_num)+factor(public_transportation_num)+factor(cough_num3)+factor(sorethroat_num3)+factor(fever_num2)+factor(diarrhea_num2)+factor(generaldiscomfort_num2)+factor(household_contact_num)+factor(previoustest_num), family=quasibinomial, design=SRS_svy_design, na.action = na.omit))
+summary(logit6)
+#which variable should we take out next?
+#diarrhoea (p = 0.37)
+logit7 <- (svyglm(factor(study_RDT_result_num)~factor(age_range_num)+factor(job_status_num)+factor(wkoutside_num)+factor(public_transportation_num)+factor(cough_num3)+factor(sorethroat_num3)+factor(fever_num2)+factor(generaldiscomfort_num2)+factor(household_contact_num)+factor(previoustest_num), family=quasibinomial, design=SRS_svy_design, na.action = na.omit))
+summary(logit7)
+#Which variable to take out next?
+#job status (smallest p = 0.33)
+logit8 <- (svyglm(factor(study_RDT_result_num)~factor(age_range_num)+factor(wkoutside_num)+factor(public_transportation_num)+factor(cough_num3)+factor(sorethroat_num3)+factor(fever_num2)+factor(generaldiscomfort_num2)+factor(household_contact_num)+factor(previoustest_num), family=quasibinomial, design=SRS_svy_design, na.action = na.omit))
+summary(logit8)
+#Which variable to take out next?
+#cough (smallest p = 0.19)
+logit9 <- (svyglm(factor(study_RDT_result_num)~factor(age_range_num)+factor(wkoutside_num)+factor(public_transportation_num)+factor(sorethroat_num3)+factor(fever_num2)+factor(generaldiscomfort_num2)+factor(household_contact_num)+factor(previoustest_num), family=quasibinomial, design=SRS_svy_design, na.action = na.omit))
+summary(logit9)
+#Which variable to take out next?
+#sore throat (smallest p = 0.19)
+logit10 <- (svyglm(factor(study_RDT_result_num)~factor(age_range_num)+factor(wkoutside_num)+factor(public_transportation_num)+factor(fever_num2)+factor(generaldiscomfort_num2)+factor(household_contact_num)+factor(previoustest_num), family=quasibinomial, design=SRS_svy_design, na.action = na.omit))
+summary(logit10)
+#Which variable to take out next?
+#work outside (p = 0.18)
+logit11 <- (svyglm(factor(study_RDT_result_num)~factor(age_range_num)+factor(public_transportation_num)+factor(fever_num2)+factor(generaldiscomfort_num2)+factor(household_contact_num)+factor(previoustest_num), family=quasibinomial, design=SRS_svy_design, na.action = na.omit))
+summary(logit11)
+#Which variable to take out next?
+#public transportation (p = 0.14)
+logit12 <- (svyglm(factor(study_RDT_result_num)~factor(age_range_num)+factor(fever_num2)+factor(generaldiscomfort_num2)+factor(household_contact_num)+factor(previoustest_num), family=quasibinomial, design=SRS_svy_design, na.action = na.omit))
+summary(logit12)
+#What are the predictors of the test results in the final model?
+#What is the effect of each?
+
+```
+
+```{r}
+#CHUNK28
+#Two: proportional odds regression (dichotomous outcome:self-rated health)
+
+#Backward sequential elimination method: start with all the variables and sequentially eliminate variables from the regression model based on the p-value of each parameter estimate (at each run of the model eliminate the variable with the highest p-value)
+
+ord_log1 <- svyolr(factor(self_rated_health_num)~factor(gender_num)+factor(age_range_num)+factor(job_status_num)+factor(wkoutside_num)+factor(public_transportation_num)+factor(cough_num3)+factor(sorethroat_num3)+factor(breathdifficulty_num2)+factor(fever_num2)+factor(diarrhea_num2)+factor(generaldiscomfort_num2)+factor(diabetes_num)+factor(cardiovascular_num)+factor(obesity_num)+factor(household_contact_num)+factor(previoustest_num),SRS_svy_design)
+summary(ord_log1)
+tidy(ord_log1, conf.int = TRUE)
+#Which variable should we take out first?
+#breathing difficulty
+ord_log2 <- svyolr(factor(self_rated_health_num)~factor(gender_num)+factor(age_range_num)+factor(job_status_num)+factor(wkoutside_num)+factor(public_transportation_num)+factor(cough_num3)+factor(sorethroat_num3)+factor(fever_num2)+factor(diarrhea_num2)+factor(generaldiscomfort_num2)+factor(diabetes_num)+factor(cardiovascular_num)+factor(obesity_num)+factor(household_contact_num)+factor(previoustest_num),SRS_svy_design)
+summary(ord_log2)
+tidy(ord_log2, conf.int = TRUE)
+#Which variable should we take out next?
+#diarrhoea
+ord_log3 <- svyolr(factor(self_rated_health_num)~factor(gender_num)+factor(age_range_num)+factor(job_status_num)+factor(wkoutside_num)+factor(public_transportation_num)+factor(cough_num3)+factor(sorethroat_num3)+factor(fever_num2)+factor(generaldiscomfort_num2)+factor(diabetes_num)+factor(cardiovascular_num)+factor(obesity_num)+factor(household_contact_num)+factor(previoustest_num),SRS_svy_design)
+summary(ord_log3)
+tidy(ord_log3, conf.int = TRUE)
+#Which variable should we take out next?
+#fever
+ord_log4 <- svyolr(factor(self_rated_health_num)~factor(gender_num)+factor(age_range_num)+factor(job_status_num)+factor(wkoutside_num)+factor(public_transportation_num)+factor(cough_num3)+factor(sorethroat_num3)+factor(generaldiscomfort_num2)+factor(diabetes_num)+factor(cardiovascular_num)+factor(obesity_num)+factor(household_contact_num)+factor(previoustest_num),SRS_svy_design)
+summary(ord_log4)
+tidy(ord_log4, conf.int = TRUE)
+#Which variable should we take out next?
+#sore throat
+ord_log5 <- svyolr(factor(self_rated_health_num)~factor(gender_num)+factor(age_range_num)+factor(job_status_num)+factor(wkoutside_num)+factor(public_transportation_num)+factor(cough_num3)+factor(generaldiscomfort_num2)+factor(diabetes_num)+factor(cardiovascular_num)+factor(obesity_num)+factor(household_contact_num)+factor(previoustest_num),SRS_svy_design)
+summary(ord_log5)
+tidy(ord_log5, conf.int = TRUE)
+#Which variable should we take out next?
+#work outside
+ord_log6 <- svyolr(factor(self_rated_health_num)~factor(gender_num)+factor(age_range_num)+factor(job_status_num)+factor(public_transportation_num)+factor(cough_num3)+factor(generaldiscomfort_num2)+factor(diabetes_num)+factor(cardiovascular_num)+factor(obesity_num)+factor(household_contact_num)+factor(previoustest_num),SRS_svy_design)
+summary(ord_log6)
+tidy(ord_log6, conf.int = TRUE)
+#Which variable should we take out next?
+#general discomfort
+ord_log7 <- svyolr(factor(self_rated_health_num)~factor(gender_num)+factor(age_range_num)+factor(job_status_num)+factor(public_transportation_num)+factor(cough_num3)+factor(diabetes_num)+factor(cardiovascular_num)+factor(obesity_num)+factor(household_contact_num)+factor(previoustest_num),SRS_svy_design)
+summary(ord_log7)
+tidy(ord_log7, conf.int = TRUE)
+#Which variable should we take out next?
+#household contact
+ord_log8 <- svyolr(factor(self_rated_health_num)~factor(gender_num)+factor(age_range_num)+factor(job_status_num)+factor(public_transportation_num)+factor(cough_num3)+factor(diabetes_num)+factor(cardiovascular_num)+factor(obesity_num)+factor(previoustest_num),SRS_svy_design)
+summary(ord_log8)
+tidy(ord_log8, conf.int = TRUE)
+#Which variable should we take out next?
+#previous test
+ord_log9 <- svyolr(factor(self_rated_health_num)~factor(gender_num)+factor(age_range_num)+factor(job_status_num)+factor(public_transportation_num)+factor(cough_num3)+factor(diabetes_num)+factor(cardiovascular_num)+factor(obesity_num),SRS_svy_design)
+summary(ord_log9)
+tidy(ord_log9, conf.int = TRUE)
+#Which variable should we take out next?
+#public transportation
+ord_log10 <- svyolr(factor(self_rated_health_num)~factor(gender_num)+factor(age_range_num)+factor(job_status_num)+factor(cough_num3)+factor(diabetes_num)+factor(cardiovascular_num)+factor(obesity_num),SRS_svy_design)
+summary(ord_log10)
+tidy(ord_log10, conf.int = TRUE)
+#Which variable should we take out next?
+#gender
+ord_log11 <- svyolr(factor(self_rated_health_num)~factor(age_range_num)+factor(job_status_num)+factor(cough_num3)+factor(diabetes_num)+factor(cardiovascular_num)+factor(obesity_num),SRS_svy_design)
+summary(ord_log11)
+tidy(ord_log11, conf.int = TRUE)
+#What are the predictors of self-rated health in the final model?
+#What is the effect of each?
+```
+
